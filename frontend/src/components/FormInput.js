@@ -1,16 +1,13 @@
 import React, { useState } from "react";
 import "./FormInput.css";
-
 /*
   FormInput.js (STRING MODE)
   ------------------------------------
   Sends human-readable text values for the 4 categorical fields.
   This matches the synthetic model (trained on string categories).
-
-  IMPORTANT:
-  These label strings must EXACTLY match the strings used
-  when training the synthetic dataset in Jupyter.
 */
+
+import { apiFetch } from "../api"; // <-- make sure this path points to your src/api.js
 
 const WEATHER_OPTIONS = [
   "Fine no high winds",
@@ -41,7 +38,7 @@ const AREA_OPTIONS = [
   "Rural"
 ];
 
-function FormInput({ onResult }) {
+function FormInput({ onResult, onPredict }) {
   const [form, setForm] = useState({
     Speed_limit: 50,
     Weather_Conditions: WEATHER_OPTIONS[0],
@@ -74,23 +71,27 @@ function FormInput({ onResult }) {
     };
 
     try {
-      const response = await fetch(
-        (process.env.REACT_APP_API_URL || "http://127.0.0.1:8000") + "/predict",
-        {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(payload)
-        }
-      );
+      // Use PHP proxy so session cookie is checked and request is logged.
+      const res = await apiFetch("predict.php", {
+        method: "POST",
+        body: JSON.stringify(payload)
+      });
 
-      if (!response.ok) {
-        const text = await response.text();
-        throw new Error(text || "Prediction failed");
+      if (!res.ok) {
+        // handle common cases
+        if (res.status === 401) {
+          throw new Error("Unauthorized — please login before predicting.");
+        }
+        // try to show server message if present
+        const msg = res.data?.error || res.data?.detail || JSON.stringify(res.data) || "Prediction failed";
+        throw new Error(msg);
       }
 
-      const data = await response.json();
+      const data = res.data;
       setResult(data);
-      if (onResult) onResult(data);
+      // Call whichever callback the parent provided
+      if (typeof onResult === "function") onResult(data);
+      if (typeof onPredict === "function") onPredict(data);
     } catch (err) {
       console.error("Prediction error:", err);
       setError(err.message || "Failed to predict");
@@ -191,7 +192,7 @@ function FormInput({ onResult }) {
           <h3>Prediction Result</h3>
           <p><strong>Severity Class:</strong> {result.severity_class}</p>
           <p><strong>Severity Label:</strong> {result.severity_label}</p>
-          {result.confidence && (
+          {result.confidence != null && (
             <p><strong>Confidence:</strong> {(result.confidence * 100).toFixed(1)}%</p>
           )}
         </div>
