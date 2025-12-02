@@ -1,59 +1,99 @@
-.form-container {
-  background: white;
-  padding: 30px;
-  border-radius: 15px;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-  width: 100%;
-  max-width: 500px;
-  margin: 30px auto;
-  text-align: left;
+/* FormInput.css - improved styling for the prediction form */
+
+.form-card {
+  max-width: 720px;
+  margin: 18px auto;
+  padding: 22px;
+  border-radius: 12px;
+  background: #ffffff;
+  box-shadow: 0 8px 30px rgba(11, 20, 38, 0.06);
+  border: 1px solid rgba(15, 23, 36, 0.03);
 }
 
-.form-container h2 {
-  text-align: center;
-  color: #0077cc;
-  margin-bottom: 25px;
+.form-card h2 {
+  margin-bottom: 14px;
+  font-size: 20px;
+  color: #0b2440;
 }
 
-label {
-  display: block;
+.form {
+  display: grid;
+  gap: 12px;
+}
+
+.form label {
+  display: flex;
+  flex-direction: column;
+  font-size: 14px;
+  color: #334155;
   font-weight: 600;
-  margin-bottom: 6px;
 }
 
-input,
-select {
-  width: 100%;
-  padding: 8px;
-  margin-bottom: 15px;
+.form select {
+  margin-top: 8px;
+  padding: 10px 12px;
   border-radius: 8px;
-  border: 1px solid #ccc;
-  transition: border 0.2s;
+  border: 1px solid #cbd5e1;
+  background: #fff;
+  font-size: 15px;
 }
 
-input:focus,
-select:focus {
-  outline: none;
-  border-color: #0077cc;
-}
-
-button {
-  width: 100%;
-  background-color: #0077cc;
-  color: white;
-  padding: 10px;
-  border: none;
-  border-radius: 8px;
-  font-size: 16px;
+/* Button base - keep in sync with global styles if you have them */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 10px 14px;
+  border-radius: 10px;
   cursor: pointer;
-  transition: background-color 0.3s;
+  font-weight: 700;
+  font-size: 15px;
+  border: 1px solid rgba(0,0,0,0.06);
+  transition: transform 160ms ease, box-shadow 160ms ease;
 }
 
-button:hover {
-  background-color: #005fa3;
+/* Primary button look */
+.btn-primary {
+  background: linear-gradient(90deg, #1976d2, #125ea6);
+  color: #fff;
+  border: none;
+  box-shadow: 0 8px 24px rgba(18, 90, 166, 0.14);
 }
 
-button:disabled {
-  background-color: #a8c7e2;
+.btn-primary:hover:not(:disabled) {
+  transform: translateY(-3px);
+  box-shadow: 0 12px 30px rgba(18, 90, 166, 0.18);
+}
+
+/* Big full-width predictive button for mobile/desktop */
+.predict-btn {
+  margin-top: 6px;
+  width: 100%;
+  padding: 14px 18px;
+  font-size: 16px;
+  border-radius: 12px;
+}
+
+/* Disabled state */
+button:disabled, .btn:disabled {
+  opacity: 0.7;
   cursor: not-allowed;
+  transform: none;
+  box-shadow: none;
+}
+
+/* Error and result blocks */
+.error {
+  margin-top: 12px;
+  color: #b91c1c;
+  font-weight: 600;
+}
+
+.result {
+  margin-top: 16px;
+  padding: 12px;
+  border-radius: 8px;
+  background: #f8fafc;
+  border: 1px solid #e6eef8;
 }
