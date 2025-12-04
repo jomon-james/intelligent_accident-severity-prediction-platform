@@ -1,0 +1,23 @@
+/* DatasetUpload.css */
+.upload-card {
+  max-width: 760px;
+  margin: 18px auto;
+  padding: 18px;
+}
+
+.upload-form .field {
+  margin-bottom: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.upload-form input[type="file"] {
+  padding: 6px;
+}
+
+.actions { margin-top: 12px; }
+
+.message { margin-top: 12px; padding: 10px; border-radius: 8px; }
+.message.error { background: #fff0f0; color: #9b1c1c; border: 1px solid #f5c2c2; }
+.message.success { background: #f0fff6; color: #065f46; border: 1px solid #bbf7d0; }

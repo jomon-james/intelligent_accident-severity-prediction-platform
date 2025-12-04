@@ -1,0 +1,67 @@
+/* Home.css — clean, modern landing page */
+
+.home-wrapper {
+  width: 100%;
+  padding: 30px 20px;
+  display: flex;
+  justify-content: center;
+}
+
+.home-content {
+  max-width: 900px;
+  text-align: center;
+}
+
+.home-title {
+  font-size: 32px;
+  font-weight: 800;
+  color: #0f172a;
+  margin-bottom: 10px;
+}
+
+.home-subtitle {
+  font-size: 16px;
+  color: #475569;
+  margin-bottom: 20px;
+  line-height: 1.6;
+}
+
+.home-divider {
+  width: 80px;
+  height: 4px;
+  background: linear-gradient(90deg, #1976d2, #125ea6);
+  border-radius: 4px;
+  margin: 18px auto 30px;
+}
+
+.home-features {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 18px;
+}
+
+.feature-card {
+  background: #ffffff;
+  padding: 18px;
+  border-radius: 12px;
+  text-align: left;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.05);
+  border: 1px solid rgba(0,0,0,0.04);
+}
+
+.feature-card h3 {
+  margin-bottom: 8px;
+  font-size: 18px;
+  font-weight: 700;
+  color: #0f172a;
+}
+
+.feature-card p {
+  font-size: 14px;
+  color: #475569;
+}
+
+/* admin highlight */
+.admin-card {
+  border-left: 4px solid #1976d2;
+}

@@ -1,44 +1,56 @@
 <?php
-/******************************************************************************
- * init.php — Global initialization for ALL API endpoints
- * - CORS headers
- * - OPTIONS preflight handler
- * - Session configuration
- * - JSON respond() helper
- ******************************************************************************/
+// api/init.php
+// Central init for API: CORS headers, session, helpers.
 
-// ---------- CORS CONFIG ----------
-$ALLOWED_ORIGIN = "http://localhost:3000";
+error_reporting(E_ALL);
+ini_set('display_errors', '0'); // set to '1' for dev debugging if needed
 
-header("Access-Control-Allow-Origin: $ALLOWED_ORIGIN");
-header("Access-Control-Allow-Credentials: true");
-header("Access-Control-Allow-Methods: GET, POST, OPTIONS");
-header("Access-Control-Allow-Headers: Content-Type, X-Requested-With, Accept, Authorization");
+// Allowed origins for development (frontend)
+$allowed_origins = [
+    'http://localhost:3000',
+    'http://127.0.0.1:3000',
+    'http://localhost',
+    'http://127.0.0.1'
+];
 
-// Preflight handler
-if ($_SERVER["REQUEST_METHOD"] === "OPTIONS") {
-    http_response_code(200);
-    exit();
+$origin = $_SERVER['HTTP_ORIGIN'] ?? '';
+
+if (in_array($origin, $allowed_origins, true)) {
+    header("Access-Control-Allow-Origin: $origin");
 }
 
-// ---------- SESSION CONFIG (Local Development) ----------
-session_set_cookie_params([
-    "lifetime" => 0,
-    "path"     => "/",
-    "domain"   => "",        // empty = same host (localhost)
-    "secure"   => false,     // HTTPS only in production
-    "httponly" => true,
-    "samesite" => "Lax"      // Lax = works on localhost without HTTPS
-]);
+// Allow credentials (cookies / PHP session)
+header('Access-Control-Allow-Credentials: true');
 
+// Allow these headers & methods for preflight
+header('Access-Control-Allow-Headers: Content-Type, X-Requested-With, Accept, Authorization');
+header('Access-Control-Allow-Methods: GET, POST, PUT, DELETE, OPTIONS');
+
+// Optional: recommend JSON responses by default (endpoints can override)
+header('Content-Type: application/json; charset=utf-8');
+
+// If this is a preflight request, return immediately with 200
+if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
+    // No body for preflight
+    http_response_code(200);
+    exit;
+}
+
+// Start session (so session cookie works)
 if (session_status() === PHP_SESSION_NONE) {
+    // Set SameSite=None to allow cross-site cookies from Chrome if using https.
+    // On localhost, modern browsers allow cookies with SameSite=None only over HTTPS,
+    // but Chrome/Firefox are tolerant on localhost. Keep HttpOnly.
     session_start();
 }
 
-// ---------- JSON RESPONSE HELPER ----------
-function respond($data, $code = 200) {
-    http_response_code($code);
-    header("Content-Type: application/json");
-    echo json_encode($data);
-    exit();
+/**
+ * Small helper to send JSON responses
+ */
+function respond($data, $status = 200) {
+    http_response_code($status);
+    // ensure correct header
+    header('Content-Type: application/json; charset=utf-8');
+    echo json_encode($data, JSON_UNESCAPED_UNICODE);
+    exit;
 }

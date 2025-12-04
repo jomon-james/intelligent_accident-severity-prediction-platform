@@ -1,39 +1,50 @@
 // src/Home.js
-import React from "react";
-import { Link } from "react-router-dom";
+import React, { useContext } from "react";
+import { AuthContext } from "./AuthContext";
+import "./Home.css";
 
 export default function Home() {
+  const { user } = useContext(AuthContext);
+
   return (
-    <div style={{ padding: 24, maxWidth: 1000, margin: "0 auto" }}>
-      <header style={{ marginBottom: 24 }}>
-        <h1>Intelligent Accident Severity Prediction Platform</h1>
-        <p style={{ color: "#666" }}>
-          Predict accident severity, upload datasets, and view analysis.
-        </p>
-      </header>
+    <div className="home-wrapper">
+      <div className="home-content">
+        <h1 className="home-title">
+          Intelligent Accident Severity Prediction Platform
+        </h1>
 
-      <nav style={{ display: "flex", gap: 12, marginBottom: 24 }}>
-        <Link to="/predict" style={pillStyle}>Predict</Link>
-        <Link to="/dashboard" style={pillStyle}>Dashboard</Link>
-        <Link to="/upload" style={pillStyle}>Upload Dataset</Link>
-      </nav>
-
-      <section>
-        <h3>Welcome</h3>
-        <p>
-          Use the Predict page to input road conditions and get a severity prediction.
-          Visit Dashboard to see basic analysis and your recent activity.
+        <p className="home-subtitle">
+          Welcome {user?.username ? `, ${user.username}` : ""}!  
+          This platform allows you to analyze accident datasets, predict severity,
+          and explore insights — powered by Machine Learning.
         </p>
-      </section>
+
+        <div className="home-divider"></div>
+
+        <section className="home-features">
+          <div className="feature-card">
+            <h3>⚡ Real-time Predictions</h3>
+            <p>Use the prediction model to estimate accident severity instantly.</p>
+          </div>
+
+          <div className="feature-card">
+            <h3>📊 Dashboard Insights</h3>
+            <p>View summarized analysis and monitor dataset trends.</p>
+          </div>
+
+          <div className="feature-card">
+            <h3>📁 Upload Datasets</h3>
+            <p>Upload your own datasets for model training and analysis.</p>
+          </div>
+
+          {user?.role === "admin" && (
+            <div className="feature-card admin-card">
+              <h3>🛠 Admin Tools</h3>
+              <p>Retrain models, manage datasets, and oversee system operations.</p>
+            </div>
+          )}
+        </section>
+      </div>
     </div>
   );
 }
-
-const pillStyle = {
-  display: "inline-block",
-  padding: "8px 14px",
-  background: "#1976d2",
-  color: "#fff",
-  borderRadius: 6,
-  textDecoration: "none"
-};

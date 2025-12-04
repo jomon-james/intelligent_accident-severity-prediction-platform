@@ -83,17 +83,77 @@ button:disabled, .btn:disabled {
   box-shadow: none;
 }
 
-/* Error and result blocks */
+/* Error block */
 .error {
   margin-top: 12px;
   color: #b91c1c;
   font-weight: 600;
 }
 
-.result {
-  margin-top: 16px;
-  padding: 12px;
-  border-radius: 8px;
-  background: #f8fafc;
-  border: 1px solid #e6eef8;
+/* --- Enhanced result card --- */
+.enhanced-result {
+  margin-top: 18px;
+  background: linear-gradient(180deg, #ffffff, #fbfdff);
+  padding: 16px;
+  border-radius: 12px;
+  box-shadow: 0 10px 30px rgba(2,6,23,0.06);
+  border: 1px solid rgba(2,6,23,0.04);
+}
+
+.result-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.result-head h3 {
+  margin: 0;
+  font-size: 18px;
+  color: #0b2440;
+}
+
+.severity-badge {
+  color: white;
+  font-weight: 700;
+  padding: 8px 12px;
+  border-radius: 999px;
+  font-size: 14px;
+  box-shadow: 0 6px 18px rgba(2,6,23,0.06);
+}
+
+/* result body layout */
+.result-body {
+  margin-top: 12px;
+}
+
+.result-row {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+}
+
+.result-label {
+  width: 110px;
+  color: #64748b;
+  font-weight: 700;
+}
+
+.result-value {
+  flex: 1;
+  color: #0b2440;
+}
+
+/* raw details */
+.raw-details summary {
+  cursor: pointer;
+  color: #0b2440;
+  font-weight: 700;
+}
+.raw-details summary::-webkit-details-marker { display:none; }
+
+/* Result card responsive */
+@media (max-width: 600px) {
+  .result-label { width: 100px; font-size: 13px; }
+  .predict-btn { font-size: 15px; padding: 12px; }
 }

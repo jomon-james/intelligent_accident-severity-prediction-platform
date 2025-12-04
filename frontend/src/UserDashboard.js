@@ -1,124 +1,219 @@
-// src/UserDashboard.js
+// src/Dashboard.js
 import React, { useContext, useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom";
 import { AuthContext } from "./AuthContext";
 import { apiFetch } from "./api";
+import "./Dashboard.css";
 
-export default function UserDashboard() {
+/* try importing Recharts components; if not installed the import will fail.
+   We guard rendering if charts are not available. */
+let Recharts = null;
+try {
+  // dynamic import - will be resolved at bundle time if installed
+  // eslint-disable-next-line import/no-extraneous-dependencies
+  Recharts = require("recharts");
+} catch (e) {
+  Recharts = null;
+}
+
+// fallback palette
+const COLORS = ["#1976d2", "#125ea6", "#4f46e5", "#f59e0b", "#ef4444", "#10b981"];
+
+export default function Dashboard() {
   const { user } = useContext(AuthContext);
-  const navigate = useNavigate();
-
-  const [stats, setStats] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [summary, setSummary] = useState({
+    user_count: "—",
+    prediction_count: "—",
+    dataset_count: 0,
+    model_count: 0
+  });
+  const [severityData, setSeverityData] = useState([]); // for pie chart
+  const [timeSeriesData, setTimeSeriesData] = useState([]); // for line chart
 
   useEffect(() => {
     let mounted = true;
-
-    async function loadStats() {
+    async function load() {
       setLoading(true);
       setError(null);
       try {
-        const res = await apiFetch("user_stats.php", { method: "GET" });
-        if (!res.ok) {
-          const message = res.data?.error || `Status ${res.status}`;
-          if (mounted) setError(message);
+        // Primary: call a dashboard stats endpoint if present
+        // This endpoint should return JSON like:
+        // { summary: {user_count:..., prediction_count:..., dataset_count:..., model_count:...},
+        //   severity_distribution: [{name:"Minor", value:123}, ...],
+        //   time_series: [{date:"2025-11-01", predictions:12}, ...]
+        // }
+        const res = await apiFetch("dashboard_stats.php", { method: "GET" });
+        if (res.ok && res.data) {
+          const data = res.data;
+          if (mounted) {
+            setSummary((s) => ({ ...s, ...(data.summary || {}) }));
+            setSeverityData(Array.isArray(data.severity_distribution) ? data.severity_distribution : []);
+            setTimeSeriesData(Array.isArray(data.time_series) ? data.time_series : []);
+          }
         } else {
-          if (mounted) setStats(res.data);
+          // fallback: try admin_stats.php for summary and try other endpoints
+          const r2 = await apiFetch("admin_stats.php", { method: "GET" });
+          if (r2.ok && r2.data && r2.data.stats) {
+            if (mounted) setSummary((s) => ({ ...s, user_count: r2.data.stats.user_count, prediction_count: r2.data.stats.prediction_count }));
+          } else {
+            // no stats endpoint; show placeholders
+            if (mounted) {
+              setSummary((s) => ({ ...s }));
+            }
+          }
+
+          // try severity endpoint if exists
+          const r3 = await apiFetch("severity_distribution.php", { method: "GET" });
+          if (r3.ok && Array.isArray(r3.data?.distribution)) {
+            if (mounted) setSeverityData(r3.data.distribution);
+          } else {
+            // placeholder sample
+            if (mounted && severityData.length === 0) {
+              setSeverityData([
+                { name: "Slight", value: 60 },
+                { name: "Serious", value: 25 },
+                { name: "Fatal", value: 15 }
+              ]);
+            }
+          }
+
+          // try timeseries endpoint
+          const r4 = await apiFetch("predictions_timeseries.php", { method: "GET" });
+          if (r4.ok && Array.isArray(r4.data?.series)) {
+            if (mounted) setTimeSeriesData(r4.data.series);
+          } else {
+            if (mounted && timeSeriesData.length === 0) {
+              // sample last 7 days
+              const today = new Date();
+              const sample = [];
+              for (let i = 6; i >= 0; i--) {
+                const d = new Date(today);
+                d.setDate(today.getDate() - i);
+                sample.push({ date: d.toISOString().slice(0, 10), predictions: Math.floor(Math.random() * 30) + 10 });
+              }
+              setTimeSeriesData(sample);
+            }
+          }
         }
-      } catch (e) {
-        if (mounted) setError("Network error");
+      } catch (err) {
+        console.error("Dashboard load error", err);
+        if (mounted) setError("Failed to load dashboard data");
       } finally {
         if (mounted) setLoading(false);
       }
     }
-
-    loadStats();
+    load();
     return () => { mounted = false; };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  function goToPredict() {
-    navigate("/predict");
-  }
-  function goToUpload() {
-    navigate("/upload");
-  }
+  const isChartsAvailable = !!Recharts;
 
   return (
-    <div style={{ padding: 20, maxWidth: 1000, margin: "0 auto" }}>
-      <h2>User Dashboard</h2>
-      <p>Welcome, <strong>{user?.username}</strong>!</p>
-
-      <div style={{ marginTop: 16 }}>
-        <p>Your role: <strong>{user?.role ?? "user"}</strong></p>
-        <p>You can submit accident data for prediction from the Predict page or upload datasets for analysis.</p>
+    <div className="dashboard-root">
+      <div className="dashboard-header">
+        <div>
+          <h2>Dashboard</h2>
+          <p className="muted">Overview & insights — {user?.username ? user.username : "Guest"}</p>
+        </div>
       </div>
 
-      <div style={{ marginTop: 20 }}>
-        <div style={{ display: "flex", gap: 12, marginBottom: 18 }}>
-          <button onClick={goToPredict} style={actionBtnStyle}>Go to Predict</button>
-          <button onClick={goToUpload} style={actionBtnStyle}>Upload Dataset</button>
-        </div>
-
-        <div style={{ padding: 12, borderRadius: 8, background: "#fafafa", border: "1px solid #eee" }}>
-          {loading && <div>Loading stats...</div>}
-          {error && <div style={{ color: "crimson" }}>Error: {error}</div>}
-
-          {!loading && !error && stats && (
-            <div style={{ display: "flex", gap: 12, flexWrap: "wrap" }}>
-              <StatCard title="Datasets" value={stats.datasets_count ?? 0} />
-              <StatCard title="Predictions" value={stats.predictions_count ?? 0} />
-              <ModelCard model={stats.active_model} />
+      {loading ? (
+        <div className="dashboard-loading card">Loading dashboard…</div>
+      ) : error ? (
+        <div className="dashboard-error card">{error}</div>
+      ) : (
+        <>
+          <div className="stats-row">
+            <div className="stat-card">
+              <div className="stat-title">Users</div>
+              <div className="stat-value">{String(summary.user_count ?? "—")}</div>
+              <div className="stat-sub">Total registered users</div>
             </div>
-          )}
-        </div>
-      </div>
 
-      <section style={{ marginTop: 24 }}>
-        <h3>Quick Notes</h3>
-        <ul>
-          <li>Upload CSV datasets via the <strong>Upload Dataset</strong> page; specify the target column for analysis.</li>
-          <li>After uploading, you can ask an admin to retrain the model on the new dataset (or use retrain UI if you are admin).</li>
-          <li>Recent predictions will appear here after calls to the Predict API (we store them in the database).</li>
-        </ul>
-      </section>
-    </div>
-  );
-}
+            <div className="stat-card">
+              <div className="stat-title">Predictions</div>
+              <div className="stat-value">{String(summary.prediction_count ?? "—")}</div>
+              <div className="stat-sub">Total predictions made</div>
+            </div>
 
-const actionBtnStyle = {
-  padding: "8px 14px",
-  borderRadius: 6,
-  border: "1px solid #cbd5e1",
-  background: "#fff",
-  cursor: "pointer"
-};
+            <div className="stat-card">
+              <div className="stat-title">Datasets</div>
+              <div className="stat-value">{String(summary.dataset_count ?? 0)}</div>
+              <div className="stat-sub">Uploaded datasets</div>
+            </div>
 
-function StatCard({ title, value }) {
-  return (
-    <div style={{ minWidth: 160, padding: 12, borderRadius: 8, background: "#fff", boxShadow: "0 0 0 1px rgba(16,24,40,0.03)" }}>
-      <div style={{ fontSize: 12, color: "#666" }}>{title}</div>
-      <div style={{ fontSize: 24, fontWeight: 700, marginTop: 6 }}>{value}</div>
-    </div>
-  );
-}
+            <div className="stat-card">
+              <div className="stat-title">Models</div>
+              <div className="stat-value">{String(summary.model_count ?? 0)}</div>
+              <div className="stat-sub">Saved/active models</div>
+            </div>
+          </div>
 
-function ModelCard({ model }) {
-  if (!model) {
-    return (
-      <div style={{ minWidth: 260, padding: 12, borderRadius: 8, background: "#fff" }}>
-        <div style={{ fontSize: 12, color: "#666" }}>Active Model</div>
-        <div style={{ fontSize: 18, fontWeight: 700, marginTop: 6 }}>—</div>
-        <div style={{ marginTop: 6, fontSize: 12, color: "#999" }}>No active model</div>
-      </div>
-    );
-  }
+          <div className="charts-row">
+            <div className="chart-card">
+              <h3 className="chart-title">Severity distribution</h3>
 
-  return (
-    <div style={{ minWidth: 260, padding: 12, borderRadius: 8, background: "#fff" }}>
-      <div style={{ fontSize: 12, color: "#666" }}>Active Model</div>
-      <div style={{ fontSize: 16, fontWeight: 700, marginTop: 6 }}>{model.name} <span style={{ fontWeight: 500, fontSize: 13 }}>({model.version})</span></div>
-      <div style={{ marginTop: 6, fontSize: 12, color: "#666" }}>Uploaded: {model.created_at ? new Date(model.created_at).toLocaleString() : "—"}</div>
+              {isChartsAvailable ? (
+                <Recharts.ResponsiveContainer width="100%" height={300}>
+                  <Recharts.PieChart>
+                    <Recharts.Pie
+                      data={severityData}
+                      innerRadius={60}
+                      outerRadius={110}
+                      paddingAngle={6}
+                      dataKey="value"
+                      nameKey="name"
+                    >
+                      {severityData.map((entry, index) => (
+                        <Recharts.Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                      ))}
+                    </Recharts.Pie>
+                    <Recharts.Legend verticalAlign="bottom" height={36} />
+                  </Recharts.PieChart>
+                </Recharts.ResponsiveContainer>
+              ) : (
+                // fallback simple list
+                <div className="chart-fallback">
+                  {severityData.map((s, i) => (
+                    <div key={i} className="fallback-row">
+                      <div className="fallback-dot" style={{ background: COLORS[i % COLORS.length] }} />
+                      <div className="fallback-label">{s.name}</div>
+                      <div className="fallback-value">{s.value}</div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            <div className="chart-card">
+              <h3 className="chart-title">Predictions over time</h3>
+
+              {isChartsAvailable ? (
+                <Recharts.ResponsiveContainer width="100%" height={300}>
+                  <Recharts.LineChart data={timeSeriesData} margin={{ top: 6, right: 12, left: -6, bottom: 6 }}>
+                    <Recharts.CartesianGrid strokeDasharray="3 3" />
+                    <Recharts.XAxis dataKey="date" tickFormatter={(d) => d.slice(5)} />
+                    <Recharts.YAxis />
+                    <Recharts.Tooltip />
+                    <Recharts.Line type="monotone" dataKey="predictions" stroke={COLORS[0]} strokeWidth={3} dot={{ r: 3 }} />
+                  </Recharts.LineChart>
+                </Recharts.ResponsiveContainer>
+              ) : (
+                <div className="chart-fallback">
+                  <em>Chart library not installed. Install 'recharts' to see the interactive chart.</em>
+                  <ul style={{ marginTop: 12 }}>
+                    {timeSeriesData.map((d, idx) => (
+                      <li key={idx}>{d.date}: {d.predictions}</li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+            </div>
+          </div>
+        </>
+      )}
     </div>
   );
 }

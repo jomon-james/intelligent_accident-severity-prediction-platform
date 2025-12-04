@@ -38,6 +38,15 @@ const AREA_OPTIONS = [
   "Rural"
 ];
 
+/* Human-friendly mapping for severity_label */
+const SEVERITY_MAP = {
+  0: { text: "No Injury", color: "#16a34a", desc: "No injuries expected or very mild impact." },
+  1: { text: "Slight Injury", color: "#A3E635", desc: "Minor injuries (bruises, small cuts). Medical attention unlikely." },
+  2: { text: "Moderate Injury", color: "#F59E0B", desc: "Notable injuries that may require medical treatment but are generally non-fatal." },
+  3: { text: "Serious Injury", color: "#F97316", desc: "Severe injuries likely requiring hospitalization." },
+  4: { text: "Fatal Accident", color: "#EF4444", desc: "High likelihood of life-threatening injuries or fatality." }
+};
+
 function FormInput({ onResult, onPredict }) {
   const [form, setForm] = useState({
     Speed_limit: 50,
@@ -98,6 +107,46 @@ function FormInput({ onResult, onPredict }) {
     } finally {
       setLoading(false);
     }
+  }
+
+  function renderFriendlyResult(res) {
+    // res.severity_label may be string or number
+    const labelNum = Number(res?.severity_label);
+    const map = SEVERITY_MAP[labelNum] || { text: "Unknown", color: "#6b7280", desc: "No description available." };
+    const confidence = res?.confidence != null ? Number(res.confidence) : null;
+
+    return (
+      <div className="enhanced-result">
+        <div className="result-head">
+          <h3>🚧 Prediction Summary</h3>
+          <div className="severity-badge" style={{ backgroundColor: map.color }}>
+            {map.text}
+          </div>
+        </div>
+
+        <div className="result-body">
+          <div className="result-row">
+            <div className="result-label">Confidence</div>
+            <div className="result-value">{confidence != null ? `${(confidence * 100).toFixed(1)}%` : "—"}</div>
+          </div>
+
+          <div className="result-row" style={{ marginTop: 8 }}>
+            <div className="result-label">Meaning</div>
+            <div className="result-value">{map.desc}</div>
+          </div>
+
+          {/* Optional: show raw values for transparency */}
+          <details className="raw-details" style={{ marginTop: 12 }}>
+            <summary>Technical details</summary>
+            <div style={{ marginTop: 8, fontSize: 13, color: "#475569" }}>
+              <div><strong>Severity Class:</strong> {String(res.severity_class)}</div>
+              <div><strong>Severity Label (raw):</strong> {String(res.severity_label)}</div>
+              {confidence != null && <div><strong>Confidence (raw):</strong> {(confidence * 100).toFixed(1)}%</div>}
+            </div>
+          </details>
+        </div>
+      </div>
+    );
   }
 
   return (
@@ -180,23 +229,14 @@ function FormInput({ onResult, onPredict }) {
           </select>
         </label>
 
-        <button className="btn" type="submit" disabled={loading}>
+        <button className="btn btn-primary predict-btn" type="submit" disabled={loading}>
           {loading ? "Predicting..." : "Predict"}
         </button>
       </form>
 
       {error && <div className="error">❌ {error}</div>}
 
-      {result && (
-        <div className="result">
-          <h3>Prediction Result</h3>
-          <p><strong>Severity Class:</strong> {result.severity_class}</p>
-          <p><strong>Severity Label:</strong> {result.severity_label}</p>
-          {result.confidence != null && (
-            <p><strong>Confidence:</strong> {(result.confidence * 100).toFixed(1)}%</p>
-          )}
-        </div>
-      )}
+      {result && renderFriendlyResult(result)}
     </div>
   );
 }
