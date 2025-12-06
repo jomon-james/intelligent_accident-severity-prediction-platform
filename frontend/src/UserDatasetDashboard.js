@@ -6,8 +6,8 @@ import HourChart from "./components/HourChart";
 import TopFactors from "./components/TopFactors";
 import "./Dashboard.css";
 
-const ANALYSIS_API = process.env.REACT_APP_ANALYSIS_URL || "http://127.0.0.1:8001";
-
+//const ANALYSIS_API = process.env.REACT_APP_ANALYSIS_URL || "http://127.0.0.1:8000";
+const ANALYSIS_API = "http://localhost:8000";
 export default function UserDatasetDashboard() {
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
