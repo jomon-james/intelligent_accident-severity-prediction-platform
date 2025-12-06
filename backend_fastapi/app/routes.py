@@ -154,3 +154,50 @@ async def predict(data: PredictionInput):
             status_code=status.HTTP_400_BAD_REQUEST,
             detail=f"Prediction error: {str(exc)}"
         )
+# ----------------- Analysis endpoints (append to routes.py) -----------------
+import os
+from fastapi import Header
+from fastapi.responses import JSONResponse
+from .analysis_compute import analyze_dataset, load_cached
+
+# configuration via environment
+ADMIN_TOKEN = os.environ.get("ADMIN_TOKEN", "changeme")
+DATASET_PATH = os.environ.get("DATASET_PATH", None)
+CACHE_PATH = os.environ.get("ANALYSIS_CACHE_PATH", None)
+
+
+@router.get("/analysis", tags=["analysis"])
+async def get_analysis():
+    """
+    Return cached analysis JSON if available; otherwise compute on-demand.
+    """
+    try:
+        cached = load_cached(CACHE_PATH)
+        if cached:
+            return JSONResponse(content=cached)
+        summary = analyze_dataset(dataset_path=DATASET_PATH, cache_path=CACHE_PATH)
+        return JSONResponse(content=summary)
+    except FileNotFoundError as fe:
+        raise HTTPException(status_code=404, detail=str(fe))
+    except Exception as e:
+        # For visibility, log and return 500
+        logger.exception("Analysis error: %s", e)
+        raise HTTPException(status_code=500, detail="Analysis failed")
+
+
+@router.post("/analysis/regenerate", tags=["analysis"])
+async def regenerate_analysis(x_admin_token: str = Header(None)):
+    """
+    Admin-only: force recompute of the analysis and update cache.
+    Header required: X-Admin-Token: <token>
+    """
+    if x_admin_token is None or x_admin_token != ADMIN_TOKEN:
+        raise HTTPException(status_code=401, detail="Unauthorized")
+    try:
+        summary = analyze_dataset(dataset_path=DATASET_PATH, cache_path=CACHE_PATH)
+        return JSONResponse(content={"ok": True, "generated_at": summary.get("generated_at")})
+    except FileNotFoundError as fe:
+        raise HTTPException(status_code=404, detail=str(fe))
+    except Exception as e:
+        logger.exception("Regenerate error: %s", e)
+        raise HTTPException(status_code=500, detail="Regeneration failed")

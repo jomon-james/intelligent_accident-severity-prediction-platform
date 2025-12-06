@@ -13,7 +13,7 @@ import UserDashboard from "./UserDashboard";
 import AdminDashboard from "./AdminDashboard";
 import DatasetUpload from "./components/DatasetUpload";
 import FormInput from "./components/FormInput";
-
+import UserDatasetDashboard from "./UserDatasetDashboard";
 import "./global.css"; // ensure global styling is loaded
 
 function LandingOrRedirect() {
@@ -69,16 +69,20 @@ export default function App() {
                   }
                 />
 
-                <Route
+                {/***<Route
                   path="/dashboard"
                   element={
                     <ProtectedRoute>
                       <UserDashboard />
                     </ProtectedRoute>
                   }
-                />
-
-                <Route
+                />*/}
+               <Route path="/dashboard" element={
+  <ProtectedRoute>
+    <UserDatasetDashboard />
+  </ProtectedRoute>
+} />
+                 <Route
                   path="/upload"
                   element={
                     <ProtectedRoute>

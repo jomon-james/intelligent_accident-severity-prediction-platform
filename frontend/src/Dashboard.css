@@ -71,3 +71,51 @@
 @media (max-width: 520px) {
   .stats-row { grid-template-columns: 1fr; }
 }
+/* src/Dashboard.css */
+.dashboard-root {
+  padding: 18px;
+  max-width: 1100px;
+  margin: 0 auto;
+  font-family: Inter, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial;
+}
+
+.kpi-row {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 12px;
+  margin-bottom: 18px;
+}
+
+.chart-card {
+  background: #fff;
+  padding: 12px;
+  border-radius: 10px;
+  border: 1px solid rgba(2,6,23,0.04);
+  box-shadow: 0 8px 20px rgba(2,6,23,0.04);
+}
+
+.charts-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+  margin-bottom: 18px;
+}
+
+.chart-card.wide {
+  grid-column: span 1;
+}
+
+.sample-table table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+}
+.sample-table th, .sample-table td {
+  padding: 6px 8px;
+  border-bottom: 1px solid #eef2f7;
+  text-align: left;
+}
+.top-factors { display: flex; gap: 16px; flex-wrap: wrap; }
+.factor-block { min-width: 180px; max-width: 360px; }
+.factor-block h5 { margin: 0 0 8px 0; font-size: 14px; }
+.error { color: #b91c1c; padding: 12px; }
